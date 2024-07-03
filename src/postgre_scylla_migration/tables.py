@@ -1,40 +1,34 @@
-from dotenv import load_dotenv
 import os
+
+from dotenv import load_dotenv
 
 # -------------------------------------------
 # ---------------- load vars ----------------
 # -------------------------------------------
 
 load_dotenv()
-pg_pass=os.getenv('PG_PASS')
-pg_host=os.getenv('PG_HOST')
-scylla_host=os.getenv('SCYLLA_HOST')
-#-----------------------------------------------------------------------------------
-#-----------------------------------------------------------------------------------
+pg_pass = os.getenv("PG_PASS")
+pg_host = os.getenv("PG_HOST")
+scylla_host = os.getenv("SCYLLA_HOST")
+# -----------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------
 
 
 pg_config = {
-        'database': 'egabee',
-        'user': 'egabee',
-        'password': pg_pass,
-        'host': pg_host,
-        'port': '5432'
-    }
+    "database": "egabee",
+    "user": "egabee",
+    "password": pg_pass,
+    "host": pg_host,
+    "port": "5432",
+}
 
-scylla_config = {
-        'contact_points': [scylla_host],
-        'keyspace': 'egabee'
-    }
+scylla_config = {"contact_points": [scylla_host], "keyspace": "egabee"}
 
-#------ is reversed keywords --------- 
+# ------ is reversed keywords ---------
 column_mapping = {
-        'user_validation_codes': {
-            'token': 'token_'
-        },
-        'cosmwasm_contract': {
-            'schema': 'schema_'
-        }
-    }
+    "user_validation_codes": {"token": "token_"},
+    "cosmwasm_contract": {"schema": "schema_"},
+}
 
 
 table_names = [
@@ -56,7 +50,7 @@ table_names = [
     "user_nfts",
     "user_relayer",
     "user_contract_artifacts",
-    "cosmwasm_contract", 
+    "cosmwasm_contract",
     "user_rollapp",
     "alert_rules",
     "alert_conditions",
@@ -64,5 +58,5 @@ table_names = [
     "historical_alerts",
     "webhook_delivery_queue",
     "web3_actions",
-    "web3_action_runs" 
+    "web3_action_runs",
 ]

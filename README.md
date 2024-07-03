@@ -10,10 +10,16 @@ This script migrates data from PostgreSQL to ScyllaDB using Python, psycopg2 for
     - Outputs migration success messages for each table migrated.
 
 
-## how to use ? 
-    - clone the repo and open the dir    
-    - docker compose up 
+## how to use ?
+    - clone the repo and open the dir
+    - docker compose up
     - python migrate.py (before run you need to change the host ips to what you have on your machine you can use this command down to get your ips )
 
-### command to know the ip of spcific container 
+### command to know the ip of spcific container
 `docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' <container_id_or_name>`
+
+## Env File
+
+PG_HOST=""
+PG_PASS=""
+SCYLLA_HOST=""
