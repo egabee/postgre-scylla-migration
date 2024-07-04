@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 import uuid
 from datetime import datetime
 
@@ -21,8 +22,20 @@ def get_postgres_connection(database, user, password, host, port):
     )
 
 
-def get_scylla_connection(contact_points, keyspace):
-    return Cluster(contact_points).connect(keyspace)
+def get_scylla_connection(contact_points, keyspace, max_retries=3):
+    cluster = None
+    for i in range(max_retries):
+        try:
+            cluster = Cluster(contact_points)
+            session = cluster.connect(keyspace)
+            logging.info(f"Connected to ScyllaDB cluster at {contact_points}")
+            return session
+        except Exception as e:
+            logging.error(f"Error connecting to ScyllaDB on attempt {i + 1}: {e}")
+            if i < max_retries - 1:
+                time.sleep(2**i)
+            else:
+                raise
 
 
 # -----------------------------------------------------------------------------------
@@ -40,7 +53,7 @@ def fetch_data_from_postgres(pg_cursor, table_name):
 
 
 def prepare_and_insert_data_into_scylla(
-    session, table_name, columns, rows, column_mapping
+    session, table_name: str, columns: list, rows: list, column_mapping: dict
 ):
     scylla_columns = [column_mapping.get(col, col) for col in columns]
 
@@ -49,10 +62,11 @@ def prepare_and_insert_data_into_scylla(
 
     for row in rows:
         row_data = []
-        # do some handeling and checks for data bcz diff types
         for i, value in enumerate(row):
             column = columns[i]
-            if isinstance(value, uuid.UUID):
+            if value is None:
+                row_data.append(None)
+            elif isinstance(value, uuid.UUID):
                 row_data.append(value)
             elif isinstance(value, str) and len(value) == 36:
                 try:
@@ -61,17 +75,25 @@ def prepare_and_insert_data_into_scylla(
                     row_data.append(value)
             elif isinstance(value, datetime):
                 row_data.append(value)
-            elif isinstance(value, dict):
+            elif isinstance(value, list) or isinstance(value, dict):
                 row_data.append(json.dumps(value))
+            elif column == "max_sequencers":
+                try:
+                    row_data.append(int(value))
+                except (ValueError, TypeError) as e:
+                    logging.error(
+                        f"Error converting value '{value}' to int for column '{column}': {e}"
+                    )
+                    row_data.append(0)
             else:
                 row_data.append(value)
 
-        if any(pk is None or pk == "" for pk in row_data):
-            logging.warning(f"Skipping row with empty primary key: {row_data}")
-            continue
-
         logging.info(f"Row data to insert: {row_data}")
-        session.execute(prepared, row_data)
+        try:
+            session.execute(prepared, row_data)
+            logging.info("Data inserted successfully.")
+        except Exception as e:
+            logging.error(f"Error inserting data into ScyllaDB: {e}")
 
 
 def migrate_table(pg_cursor, scylla_session, table_name, column_mapping):
@@ -96,4 +118,6 @@ def main():
 
     pg_cursor.close()
     pg_conn.close()
-    scylla_session.shutdown()
+
+    if scylla_session is not None:
+        scylla_session.shutdown()

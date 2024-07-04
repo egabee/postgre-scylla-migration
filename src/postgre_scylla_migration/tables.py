@@ -59,4 +59,11 @@ table_names = [
     "webhook_delivery_queue",
     "web3_actions",
     "web3_action_runs",
+    "cosmos_messages",
+    "cosmos_events",
+    "contracts",
+    "tokens",
+    "account_balances",
+    "relayer_info",
+    "rollapp_info",
 ]
